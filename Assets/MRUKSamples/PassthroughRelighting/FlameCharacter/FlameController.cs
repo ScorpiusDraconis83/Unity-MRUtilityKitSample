@@ -17,10 +17,8 @@ public class FlameController : MonoBehaviour
     [SerializeField] private GameObject lookAtTarget;
     [SerializeField] private int attractionForceMultiplier = 2;
     [SerializeField] private float lightIntensityVariance = 0.2f;
-    private Vector3 targetOffset = new(0.013f, 0.5f, 0);
 
     private int _blendShapeCount;
-    private Vector3 _distanceFromRoot;
     private GameObject _midGoal;
     private Rigidbody _midRigidbody;
     private GameObject _rootGoal;
@@ -29,16 +27,12 @@ public class FlameController : MonoBehaviour
     private float _startingLightIntensity;
     private GameObject _tipGoal;
     private Rigidbody _tipRigidbody;
-
-    private void Awake()
-    {
-        _distanceFromRoot = targetOffset;
-    }
+    private float _randomTimeOffset;
 
     private void Start()
     {
         CreateTargetObject();
-
+        _randomTimeOffset = UnityEngine.Random.Range(0, 100);
         _skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
         _blendShapeCount = _skinnedMeshRenderer.sharedMesh.blendShapeCount;
         _rootRigidbody = root.GetComponent<Rigidbody>();
@@ -51,7 +45,6 @@ public class FlameController : MonoBehaviour
     {
         AnimateBlendShapes();
         RotateFlame();
-        MoveFlame();
         AnimateLightIntensity();
     }
 
@@ -62,17 +55,12 @@ public class FlameController : MonoBehaviour
 
     private void AddAttractionForces()
     {
-        var baseDistance = _rootGoal.transform.position - root.transform.position;
-        _rootRigidbody.AddForce(baseDistance * attractionForceMultiplier);
+        _rootGoal.transform.position = attractionTarget.position;
+        root.transform.position = attractionTarget.position;
         var midAttractDir = _midGoal.transform.position - mid.transform.position;
         _midRigidbody.AddForce(midAttractDir * attractionForceMultiplier);
         var tipAttractDir = _tipGoal.transform.position - tip.transform.position;
         _tipRigidbody.AddForce(tipAttractDir * attractionForceMultiplier);
-    }
-
-    private void MoveFlame()
-    {
-        _rootGoal.transform.position = attractionTarget.transform.position + _distanceFromRoot;
     }
 
     private void AnimateLightIntensity()
@@ -85,7 +73,6 @@ public class FlameController : MonoBehaviour
     {
         var flameForward =
             Vector3.ProjectOnPlane(lookAtTarget.transform.position - root.transform.position, Vector3.up);
-
         tip.transform.rotation =
             Quaternion.LookRotation(tip.transform.position - mid.transform.position, flameForward);
         mid.transform.rotation =
@@ -96,7 +83,7 @@ public class FlameController : MonoBehaviour
 
     private void CreateTargetObject()
     {
-        _rootGoal = new GameObject("baseGoal");
+        _rootGoal = new GameObject("rootGoal");
         _midGoal = new GameObject("midGoal");
         _tipGoal = new GameObject("topGoal");
         _midGoal.transform.SetParent(_rootGoal.transform);
@@ -108,13 +95,16 @@ public class FlameController : MonoBehaviour
         _midGoal.transform.rotation = mid.transform.rotation;
         _tipGoal.transform.position = tip.transform.position;
         _tipGoal.transform.rotation = tip.transform.rotation;
+
+        mid.transform.parent = null;
+        tip.transform.parent = null;
     }
 
     private void AnimateBlendShapes()
     {
         for (var i = 0; i < _blendShapeCount; i++)
         {
-            var noise = Mathf.PerlinNoise(Time.time * BlendShapesSpeed, i + 1);
+            var noise = Mathf.PerlinNoise((Time.time * BlendShapesSpeed) + _randomTimeOffset, i + 1);
             _skinnedMeshRenderer.SetBlendShapeWeight(i, noise * 100);
         }
 

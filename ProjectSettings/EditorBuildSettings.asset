@@ -42,9 +42,6 @@ EditorBuildSettings:
     path: Assets/MRUKSamples/PassthroughRelighting/PassthroughRelighting.unity
     guid: 36246cc1dd7f015428dc705da9e4497e
   - enabled: 1
-    path: Assets/MRUKSamples/SceneDecorator/SceneDecorator.unity
-    guid: 74ec1332800b4dd44915943d3bd65e1e
-  - enabled: 1
     path: Assets/MRUKSamples/SpaceMap/SpaceMap.unity
     guid: 217e7779650489a4b8c50f8e26774a21
   - enabled: 1
@@ -53,3 +50,5 @@ EditorBuildSettings:
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: ec394ef86593ca64583b7ee082c3db87, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: a02410354ace8ee4eaedcfcbd778bd95, type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 2c1496f00db3ca640a4d6a64264f5085, type: 2}
+  m_UseUCBPForAssetBundles: 0

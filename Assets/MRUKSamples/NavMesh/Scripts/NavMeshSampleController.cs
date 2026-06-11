@@ -27,8 +27,8 @@ namespace MRUtilityKitSample.NavMesh
 
         private void Update()
         {
-            if (OVRInput.GetDown(OVRInput.RawButton.RHandTrigger) ||
-                OVRInput.GetDown(OVRInput.RawButton.LHandTrigger))
+            if (OVRInput.GetDown(OVRInput.RawButton.LIndexTrigger) ||
+                OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
             {
                 if (!SceneNavigation)
                 {

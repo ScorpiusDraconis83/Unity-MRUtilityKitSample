@@ -67,7 +67,8 @@ namespace Meta.XR.MRUtilityKitSamples.BouncingBall
             RaycastHit info;
             if (Physics.Raycast(ray, out info, displacement.magnitude))
             {
-                if (info.collider.gameObject != this.gameObject)
+                if ((info.collider.gameObject != this.gameObject) &&
+                    (info.collider.tag != "Ball"))
                 {
                     SetVisible(false);
                 }

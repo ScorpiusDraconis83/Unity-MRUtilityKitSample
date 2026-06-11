@@ -1,6 +1,7 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Meta.XR.MRUtilityKit;
 using Meta.XR.Samples;
@@ -15,17 +16,21 @@ namespace Meta.XR.MRUtilityKitSamples.VirtualHome
     public class RoomBasedMaterialTweak : MonoBehaviour
     {
         private static readonly int DistanceCovered = Shader.PropertyToID("_DistanceCovered");
+        private CancellationTokenSource _cts;
 
-        private void OnEnable()
+        void Start()
         {
+            _cts = new CancellationTokenSource();
             if (MRUK.Instance != null)
             {
                 MRUK.Instance.SceneLoadedEvent.AddListener(StartTweakingAsync);
             }
         }
 
-        private void OnDisable()
+        void OnDestroy()
         {
+            _cts?.Cancel();
+            _cts?.Dispose();
             if (MRUK.Instance != null)
             {
                 MRUK.Instance.SceneLoadedEvent.RemoveListener(StartTweakingAsync);
@@ -41,6 +46,10 @@ namespace Meta.XR.MRUtilityKitSamples.VirtualHome
             try
             {
                 await TweakDistanceBasedGradient();
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when the object is destroyed during the async operation.
             }
             catch (InvalidOperationException e)
             {
@@ -72,8 +81,14 @@ namespace Meta.XR.MRUtilityKitSamples.VirtualHome
             float t = 0;
             while (t < 1)
             {
+                _cts.Token.ThrowIfCancellationRequested();
                 foreach (var meshRenderer in allMeshes)
                 {
+                    if (meshRenderer == null)
+                    {
+                        continue;
+                    }
+
                     if (meshRenderer.material.HasProperty(DistanceCovered))
                     {
                         meshRenderer.material.SetVector(DistanceCovered,

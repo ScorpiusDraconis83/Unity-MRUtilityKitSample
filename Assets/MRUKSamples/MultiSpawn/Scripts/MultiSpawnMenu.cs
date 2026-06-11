@@ -24,6 +24,7 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
         [SerializeField] private TextMeshProUGUI _buttonText;
         [SerializeField] private AudioClip _allTargetsHitSound;
         [SerializeField] private FindSpawnPositions[] _findSpawnPositions;
+        [SerializeField] private GameObject _introPanel;
 
 
         public Camera Camera;
@@ -146,6 +147,12 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
             isTimerRunning = true;
             _buttonText.text = "RESET";
             EnableAllShootingReticles();
+
+            // Auto-dismiss the intro panel when the Start button is pressed
+            if (_introPanel != null && _introPanel.activeSelf)
+            {
+                _introPanel.SetActive(false);
+            }
         }
 
         private void FinishedGame()

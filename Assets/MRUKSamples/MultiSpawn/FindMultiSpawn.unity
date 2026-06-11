@@ -884,8 +884,12 @@ PrefabInstance:
       objectReference: {fileID: 655552109}
     - target: {fileID: 3774492161316796919, guid: 573472cfe1801994c9c525bf12cfa768, type: 3}
       propertyPath: _findSpawnPositions.Array.data[4]
-      value: 
+      value:
       objectReference: {fileID: 7206423110247988464}
+    - target: {fileID: 3774492161316796919, guid: 573472cfe1801994c9c525bf12cfa768, type: 3}
+      propertyPath: _introPanel
+      value:
+      objectReference: {fileID: 6344547389430905392}
     - target: {fileID: 3946535681413462566, guid: 573472cfe1801994c9c525bf12cfa768, type: 3}
       propertyPath: m_Sprite
       value: 

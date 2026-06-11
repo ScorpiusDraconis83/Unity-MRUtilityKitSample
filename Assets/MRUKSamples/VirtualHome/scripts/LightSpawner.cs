@@ -22,7 +22,11 @@ namespace Meta.XR.MRUtilityKitSamples.VirtualHome
             var roomBoundsSize = anchorInfo.Room.GetRoomBounds().size;
             var maxExtent = Mathf.Max(roomBoundsSize.x, roomBoundsSize.y, roomBoundsSize.z);
             var lightComponent = gameObject?.GetComponentInChildren<Light>();
-            if (gameObject == null || lightComponent == null)
+            if (gameObject == null)
+            {
+                return;
+            }
+            if (lightComponent == null)
             {
                 Debug.LogWarning("No light source was found on the prefab to be spawned or its children");
                 return;

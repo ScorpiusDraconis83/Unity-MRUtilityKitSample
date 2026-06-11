@@ -18,7 +18,7 @@ namespace Meta.XR.MRUtilityKitSamples.QRCodeDetection
 
         public const string ScenePermission = OVRPermissionsRequester.ScenePermission;
 
-        public static bool IsSupported => MRUK.Instance.QRCodeTrackingSupported;
+        public static bool IsSupported => MRUK.Instance != null && MRUK.Instance.QRCodeTrackingSupported;
 
         public static bool HasPermissions
 #if UNITY_EDITOR
@@ -32,16 +32,16 @@ namespace Meta.XR.MRUtilityKitSamples.QRCodeDetection
 
         public static bool TrackingEnabled
         {
-            get => s_instance && s_instance._mrukInstance && s_instance._mrukInstance.SceneSettings.TrackerConfiguration.QRCodeTrackingEnabled;
+            get => s_instance && MRUK.Instance && MRUK.Instance.SceneSettings.TrackerConfiguration.QRCodeTrackingEnabled;
             set
             {
-                if (!s_instance || !s_instance._mrukInstance)
+                if (!s_instance || !MRUK.Instance)
                 {
                     return;
                 }
-                var config = s_instance._mrukInstance.SceneSettings.TrackerConfiguration;
+                var config = MRUK.Instance.SceneSettings.TrackerConfiguration;
                 config.QRCodeTrackingEnabled = value;
-                s_instance._mrukInstance.SceneSettings.TrackerConfiguration = config;
+                MRUK.Instance.SceneSettings.TrackerConfiguration = config;
             }
         }
 
@@ -114,9 +114,6 @@ namespace Meta.XR.MRUtilityKitSamples.QRCodeDetection
         [SerializeField]
         QRCodeSampleUI _uiInstance;
 
-        [SerializeField]
-        MRUK _mrukInstance;
-
         // non-serialized fields
 
         int _activeCount;
@@ -133,28 +130,34 @@ namespace Meta.XR.MRUtilityKitSamples.QRCodeDetection
             {
                 _uiInstance = ui;
             }
-            if (!_mrukInstance && FindAnyObjectByType<MRUK>() is { } mruk && mruk.gameObject.scene == gameObject.scene)
-            {
-                _mrukInstance = mruk;
-            }
         }
 
         void OnEnable()
         {
             s_instance = this;
+        }
 
-            if (!_mrukInstance)
+        private void Start()
+        {
+            if (!MRUK.Instance)
             {
                 Log($"{nameof(QRCodeManager)} requires an MRUK object in the scene!", LogType.Error);
                 return;
             }
 
-            _mrukInstance.SceneSettings.TrackableAdded.AddListener(OnTrackableAdded);
-            _mrukInstance.SceneSettings.TrackableRemoved.AddListener(OnTrackableRemoved);
+            MRUK.Instance.SceneSettings.TrackableAdded.AddListener(OnTrackableAdded);
+            MRUK.Instance.SceneSettings.TrackableRemoved.AddListener(OnTrackableRemoved);
         }
 
         void OnDestroy()
-            => s_instance = null;
+        {
+            if (MRUK.Instance)
+            {
+                MRUK.Instance.SceneSettings.TrackableAdded.RemoveListener(OnTrackableAdded);
+                MRUK.Instance.SceneSettings.TrackableRemoved.RemoveListener(OnTrackableRemoved);
+            }
+            s_instance = null;
+        }
 
 
         //

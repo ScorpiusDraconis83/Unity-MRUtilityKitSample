@@ -20,7 +20,7 @@ namespace Meta.XR.MRUtilityKitSamples.Basic
         private Color _defaultColor;
         private UnityAction _sceneLoadedAction;
 
-        private void OnEnable()
+        private void Start()
         {
             _sceneLoadedAction = OnSceneLoaded;
             if (MRUK.Instance)
@@ -58,7 +58,7 @@ namespace Meta.XR.MRUtilityKitSamples.Basic
             }
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             if (MRUK.Instance)
             {

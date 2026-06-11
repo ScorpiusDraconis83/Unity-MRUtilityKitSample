@@ -16,7 +16,21 @@ namespace Meta.XR.MRUtilityKitSamples.HiFiScene
         /// </summary>
         void Start()
         {
-            MRUK.Instance.SceneLoadedEvent.AddListener(SceneLoadedEvent);
+            if (MRUK.Instance)
+            {
+                MRUK.Instance.SceneLoadedEvent.AddListener(SceneLoadedEvent);
+            }
+        }
+
+        /// <summary>
+        /// We need to unsubscribe to the scene loaded event once this objects gets destroyed.
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (MRUK.Instance)
+            {
+                MRUK.Instance.SceneLoadedEvent.RemoveListener(SceneLoadedEvent);
+            }
         }
 
         /// <summary>

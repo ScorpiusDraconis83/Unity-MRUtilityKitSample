@@ -23,7 +23,6 @@ More information on MR Utility Kit can be found on our [developer website](https
 - [Nav Mesh](./Assets/MRUKSamples/NavMesh): A scene showing how to create a nav mesh for navigation leveraging the scene data.
 - [Virtual Home](./Assets/MRUKSamples/VirtualHome): A scene showing how to reskin a room using the prefab spawner functionality.
 - [Passthrough Relighting](./Assets/MRUKSamples/PassthroughRelighting): A scene showing the effect of virtual shadows and highlights on scene objects.
-- [Scene Decorator](./Assets/MRUKSamples/SceneDecorator): A scene with basic decorations and SceneDecorator to populate the environment.
 - [Destructible Mesh](./Assets/MRUKSamples/DestructibleMesh): A scene showing how to spawn a global mesh that can be segmented, usually used to create destructible environments.
 - [Environment Panel Placement](./Assets/MRUKSamples/EnvironmentPanelPlacement): A scene showing how to use EnvironmentRaycastManager to attach virtual panel to the physical environment.
 - [Space Map](./Assets/MRUKSamples/SpaceMap): A scene with the SpaceMap prefab added. It creates a texture which represents the room with a color gradient according to the settings of the prefab.
@@ -43,7 +42,7 @@ git clone https://github.com/oculus-samples/Unity-MRUtilityKitSample.git
 
 ## How to run the project in Unity
 
-1. Make sure you're using  *Unity 2022.3.15f1* or newer.
+1. Make sure you're using  *Unity 6000.0.59f2* or newer.
 2. In the Project window, navigate to [Assets/MRUKSamples/](Assets/MRUKSamples).
 3. Click on individual scenes.
 4. Click **Play** button to explore scene functionality in Unity.

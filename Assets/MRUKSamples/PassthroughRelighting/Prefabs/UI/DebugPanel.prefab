@@ -3581,6 +3581,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2624990573474107925}
   - component: {fileID: 2624990573474107923}
+  - component: {fileID: 1911891123162957971}
   m_Layer: 0
   m_Name: DebugPanel
   m_TagString: Untagged
@@ -3624,12 +3625,24 @@ MonoBehaviour:
   _passthroughBrightnessSlider: {fileID: 2624990573159023543}
   _lightBlendFactor: {fileID: 2624990572417881815}
   _oppyRenderer: {fileID: 0}
-  _blobShadowProjector: {fileID: 0}
   _sceneMaterial: {fileID: 2100000, guid: 69e54be2e702f984683fa4816dc4b0f8, type: 2}
   _oppyController: {fileID: 0}
   _oppyLightGlow: {fileID: 0}
   _passthroughLayer: {fileID: 0}
   _highlights: 0
+--- !u!114 &1911891123162957971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2624990573474107924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c328544fd0d1eb4aa7d1f86d4c64bb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Cursor: {fileID: 0}
 --- !u!1 &2624990573485148703
 GameObject:
   m_ObjectHideFlags: 0
