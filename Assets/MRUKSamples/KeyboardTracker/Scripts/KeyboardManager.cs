@@ -2,6 +2,7 @@
 
 using UnityEngine;
 using Meta.XR.MRUtilityKit;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using System;
 
@@ -46,7 +47,7 @@ namespace Meta.XR.MRUtilityKitSamples.KeyboardTracker
         void Update()
         {
             // Toggle between full passthrough and surface-projected passthrough
-            if (OVRInput.GetDown(OVRInput.RawButton.A))
+            if (OVRInput.GetDown(OVRInput.Button.One) || HandInputManager.Instance.ThumbTapDown)
             {
                 _skybox.SetActive(!_skybox.activeInHierarchy);
             }

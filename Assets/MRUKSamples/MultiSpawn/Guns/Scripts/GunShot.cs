@@ -1,9 +1,11 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 using System.Collections;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using MRUtilityKitSample.NavMesh;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
 {
@@ -22,6 +24,11 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
         [SerializeField] private Transform _gunBarrel;
         [SerializeField] private GameObject _bullet;
         [SerializeField] private float _bulletSpeed = 10;
+
+        [Header("Hand Mode Offset")]
+        [Tooltip("Local rotation offset applied when using hands to align the gun with hand pointing direction.")]
+        [SerializeField] private Vector3 _handModeRotationOffset = new Vector3(0f, 90f, 90f);
+
         private Vector3 _sliderStartPos;
         private float _timer;
         private Transform _container;
@@ -32,17 +39,56 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
         [SerializeField] private AudioClip[] _shotSound;
         [SerializeField] private float _volume = 1;
 
+        private Quaternion _controllerModeLocalRotation;
+        private bool _isHandMode;
+
 
         private void Start()
         {
             _sliderStartPos = _slider.transform.localPosition;
             _container = transform.GetChild(0);
             _audioSource = GetComponent<AudioSource>();
+
+            // Store the original local rotation (for controller mode)
+            _controllerModeLocalRotation = transform.localRotation;
+
+            HandInputManager.Instance.OnInputModeChanged.AddListener(OnInputModeChanged);
+            OnInputModeChanged(HandInputManager.Instance.CurrentInputMode);
+        }
+
+        private void OnDestroy()
+        {
+            if (HandInputManager.Instance != null)
+            {
+                HandInputManager.Instance.OnInputModeChanged.RemoveListener(OnInputModeChanged);
+            }
+        }
+
+        private void OnInputModeChanged(InputMode mode)
+        {
+            _isHandMode = mode == InputMode.Hands;
+            Debug.Log("### On Input Mode Changed: " + mode.ToString() + ", isHandMode: " + _isHandMode + " ###");
+        }
+
+        private void LateUpdate()
+        {
+            // Apply rotation continuously in LateUpdate to override any other rotation changes
+            if (_isHandMode)
+            {
+                // Hardcode the rotation to bypass any serialization issues
+                // Barrel aligned with fingers, gun flat on left side, trigger/handle pointing right
+                transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+            }
+            else
+            {
+                transform.localRotation = _controllerModeLocalRotation;
+            }
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space) || OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
+            if (Keyboard.current?.spaceKey.wasPressedThisFrame == true || OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger) ||
+                HandInputManager.Instance.ThumbTapDown)
             {
                 Shoot();
             }

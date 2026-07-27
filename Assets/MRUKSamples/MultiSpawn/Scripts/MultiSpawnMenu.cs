@@ -125,7 +125,11 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
 
         public void InitializeMenu()
         {
+#if UNITY_6000_4_OR_NEWER
+            var targets = FindObjectsByType<Target>();
+#else
             var targets = FindObjectsByType<Target>(FindObjectsSortMode.None);
+#endif
             RemainingTargets = targets.Length;
             _buttonText.text = "START";
         }
@@ -165,7 +169,11 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
 
         private void EnableAllShootingReticles()
         {
+#if UNITY_6000_4_OR_NEWER
+            var targets = FindObjectsByType<Target>();
+#else
             var targets = FindObjectsByType<Target>(FindObjectsSortMode.None);
+#endif
             foreach (var target in targets)
             {
                 target.EnableShootingTarget();

@@ -74,6 +74,7 @@ namespace MRUtilityKitSample.NavMesh
                 Destroy(_objectEaten);
                 Destroy(_agentController.PositionIndicatorInstance);
                 Instantiate(_particleEffect, _objectSocket.position, _objectSocket.rotation);
+                _agentController.SetNewTargetObjectAndPostion();
             }
         }
 

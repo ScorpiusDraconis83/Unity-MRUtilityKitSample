@@ -1,6 +1,7 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 using Meta.XR.MRUtilityKit;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,11 +31,16 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
         [SerializeField] private LineRenderer _raycastVisualizationLine;
         [SerializeField] private Transform _raycastVisualizationNormal;
 
+        [Header("Hand Input Settings")]
+        [SerializeField] private float _microGestureScaleSpeed = 0.5f;
+        [SerializeField] private float _microGestureMoveSpeed = 1.0f;
+
         private readonly RollingAverage _rollingAverageFilter = new RollingAverage();
         private Pose? _targetPose;
         private Vector3 _positionVelocity;
         private float _rotationVelocity;
-        private bool _isGrabbing;
+        private bool _isGrabbingWithController;
+        private bool _isGrabbingWithHand;
         private float _distanceFromController;
         private Pose? _environmentPose;
         private EnvironmentRaycastHitStatus _currentEnvHitStatus;
@@ -42,7 +48,7 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
 
         private void Awake()
         {
-            _cameraRig = Object.FindAnyObjectByType<OVRCameraRig>();
+            _cameraRig = FindAnyObjectByType<OVRCameraRig>();
         }
 
         private IEnumerator Start()
@@ -68,7 +74,8 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
         {
             if (!hasFocus)
             {
-                _isGrabbing = false;
+                _isGrabbingWithController = false;
+                _isGrabbingWithHand = false;
                 _targetPose = null;
             }
         }
@@ -81,37 +88,63 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
             }
 
             VisualizeRaycast();
-            if (_isGrabbing)
+            if (_isGrabbingWithController || _isGrabbingWithHand)
             {
                 UpdateTargetPose();
-                if (OVRInput.GetUp(_grabButton))
+                UpdateGrabbingWithMicrogestures();
+
+                if (_isGrabbingWithController && OVRInput.GetUp(_grabButton))
+                {
+                    _isGrabbingWithController = false;
+                }
+
+                if (_isGrabbingWithHand && !IsHandPinching())
+                {
+                    _isGrabbingWithHand = false;
+                }
+
+                if (!(_isGrabbingWithController || _isGrabbingWithHand))
                 {
                     _panelGlow.SetActive(false);
-                    _isGrabbing = false;
                     _environmentPose = null;
                 }
             }
             else
             {
-                // Animate scale with right thumbstick
+                // Animate scale with right thumbstick or microgestures
                 const float scaleSpeed = 1.5f;
                 var panelScale = _panel.localScale.x;
-                panelScale *= 1f + OVRInput.Get(_scaleAxis).y * scaleSpeed * Time.deltaTime;
+                float scaleInput = OVRInput.Get(_scaleAxis).y;
+
+                // Use microgestures for scaling when in hand tracking mode
+                scaleInput += GetMicrogestureScaleInput();
+
+                panelScale *= 1f + scaleInput * scaleSpeed * Time.deltaTime;
                 panelScale = Mathf.Clamp(panelScale, 0.2f, 1.5f);
                 _panel.localScale = new Vector3(panelScale, panelScale * _panelAspectRatio, 1f);
 
                 // Detect grab gesture and update grab indicator
                 bool didHitPanel = Physics.Raycast(GetRaycastRay(), out var hit) && hit.transform == _panel;
                 _panelGlow.SetActive(didHitPanel);
-                if (didHitPanel && OVRInput.GetDown(_grabButton))
+                if (didHitPanel)
                 {
-                    _isGrabbing = true;
-                    _distanceFromController = Vector3.Distance(_raycastAnchor.position, _panel.position);
+                    if (OVRInput.GetDown(_grabButton))
+                    {
+                        _isGrabbingWithController = true;
+                    }
+                    if (DidHandPinchStart())
+                    {
+                        _isGrabbingWithHand = true;
+                    }
+                    if (_isGrabbingWithController || _isGrabbingWithHand)
+                    {
+                        _distanceFromController = Vector3.Distance(_raycastAnchor.position, _panel.position);
+                    }
                 }
             }
             AnimatePanelPose();
 
-            if (OVRInput.GetUp(OVRInput.RawButton.X))
+            if (OVRInput.GetUp(OVRInput.Button.Three))
             {
                 MRUK.Instance.EnableWorldLock = !MRUK.Instance.EnableWorldLock;
             }
@@ -125,6 +158,101 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
         private Ray GetRaycastRay()
         {
             return new Ray(_raycastAnchor.position + _raycastAnchor.forward * 0.1f, _raycastAnchor.forward);
+        }
+
+        /// <summary>
+        /// Gets the scale input from microgestures (swipe up/down).
+        /// Swipe up = scale up, Swipe down = scale down.
+        /// </summary>
+        private float GetMicrogestureScaleInput()
+        {
+            if (HandInputManager.Instance == null || HandInputManager.Instance.CurrentInputMode != InputMode.Hands)
+            {
+                return 0f;
+            }
+
+            // Swipe backward (up) = scale up, Swipe forward (down) = scale down
+            if (HandInputManager.Instance.IsSwipeBackwardActive)
+            {
+                return _microGestureScaleSpeed;
+            }
+            if (HandInputManager.Instance.IsSwipeForwardActive)
+            {
+                return -_microGestureScaleSpeed;
+            }
+            return 0f;
+        }
+
+        /// <summary>
+        /// Updates panel distance using microgestures while grabbing.
+        /// Uses continuous pinch drag for analog stick-like behavior (move hand up/down while pinching).
+        /// Swipe up = move away, Swipe down = move closer.
+        /// </summary>
+        private void UpdateGrabbingWithMicrogestures()
+        {
+            if (HandInputManager.Instance == null || HandInputManager.Instance.CurrentInputMode != InputMode.Hands)
+            {
+                return;
+            }
+
+            // Use continuous pinch drag if active (analog stick-like behavior)
+            // This uses hand vertical movement during the index pinch used for grabbing
+            if (HandInputManager.Instance.IsPinchDragActive)
+            {
+                // PinchDragValue is -1 to 1, similar to thumbstick input
+                // Positive = up/away, Negative = down/closer
+                _distanceFromController += HandInputManager.Instance.PinchDragValue * _microGestureMoveSpeed * Time.deltaTime;
+            }
+            // Fall back to discrete swipe gestures if pinch drag isn't active
+            else if (HandInputManager.Instance.IsSwipeBackwardActive)
+            {
+                _distanceFromController += _microGestureMoveSpeed * Time.deltaTime;
+            }
+            else if (HandInputManager.Instance.IsSwipeForwardActive)
+            {
+                _distanceFromController -= _microGestureMoveSpeed * Time.deltaTime;
+            }
+            _distanceFromController = Mathf.Clamp(_distanceFromController, 0.3f, float.MaxValue);
+        }
+
+        /// <summary>
+        /// Checks if the hand just started an index+thumb pinch (like GetDown for buttons).
+        /// Uses the primary hand (right) for grabbing.
+        /// </summary>
+        private bool DidHandPinchStart()
+        {
+            if (HandInputManager.Instance == null || HandInputManager.Instance.CurrentInputMode != InputMode.Hands)
+            {
+                return false;
+            }
+
+            // Check if right hand index pinch just started (A button equivalent)
+            // We check the event since IsIndexPinching is continuous
+            return HandInputManager.Instance.IsIndexPinching && !_wasHandPinching;
+        }
+
+        /// <summary>
+        /// Checks if the hand is currently performing an index+thumb pinch.
+        /// </summary>
+        private bool IsHandPinching()
+        {
+            if (HandInputManager.Instance == null || HandInputManager.Instance.CurrentInputMode != InputMode.Hands)
+            {
+                return false;
+            }
+
+            return HandInputManager.Instance.IsIndexPinching;
+        }
+
+        private bool _wasHandPinching;
+
+        private void LateUpdate()
+        {
+            // Track previous pinch state for edge detection
+            if (HandInputManager.Instance != null)
+            {
+                _wasHandPinching = HandInputManager.Instance.IsIndexPinching;
+            }
         }
 
         private void UpdateTargetPose()

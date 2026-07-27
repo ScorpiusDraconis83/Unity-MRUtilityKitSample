@@ -3,6 +3,7 @@
 using System.Collections;
 using Meta.XR.Samples;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
 {
@@ -94,7 +95,7 @@ namespace Meta.XR.MRUtilityKitSamples.FindMultiSpawn
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.H))
+            if (Keyboard.current?.hKey.wasPressedThisFrame == true)
             {
                 DestroyHiddenTargets();
             }

@@ -359,6 +359,11 @@ namespace Meta.XR.MRUtilityKitSamples.PassthroughRelighting
             if (mruk != null)
             {
                 MRUKRoom currentRoom = mruk.GetCurrentRoom();
+                if (!currentRoom)
+                {
+                    // This function was called before a room had a change to actually load
+                    return;
+                }
                 Vector3 respawnPos = respawnTransform.position + respawnTransform.forward;
                 if (currentRoom.IsPositionInRoom(respawnPos))
                 {

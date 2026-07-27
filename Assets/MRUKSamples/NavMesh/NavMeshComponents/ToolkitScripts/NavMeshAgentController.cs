@@ -2,10 +2,12 @@
 
 using System.Collections.Generic;
 using Meta.XR.MRUtilityKit;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 
 namespace MRUtilityKitSample.NavMesh
 {
@@ -27,8 +29,8 @@ namespace MRUtilityKitSample.NavMesh
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space) || OVRInput.GetDown(OVRInput.RawButton.A) ||
-                OVRInput.GetDown(OVRInput.RawButton.X))
+            if (Keyboard.current?.spaceKey.wasPressedThisFrame == true || OVRInput.GetDown(OVRInput.Button.One) ||
+                OVRInput.GetDown(OVRInput.Button.Three) || HandInputManager.Instance.ThumbTapDown)
             {
                 SetNewTargetObjectAndPostion();
             }

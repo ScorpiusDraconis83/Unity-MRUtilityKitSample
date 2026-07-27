@@ -29,7 +29,6 @@ More information on MR Utility Kit can be found on our [developer website](https
 - [Keyboard Tracking](./Assets/MRUKSamples/KeyboardTracker): A scene demonstrating generic keyboard detection and tracking.
 - [Bouncing Ball](./Assets/MRUKSamples/BouncingBall): A scene showing virtual balls interacting with the physical environment.
 - [QR Code Detection](./Assets/MRUKSamples/QRCodeDetection): A scene demonstrating QR code detection.
-- [HiFi Scene](./Assets/MRUKSamples/HiFiScene): A scene showing multiple floors and ceilings, slanted ceilings, inner walls.
 
 More information on all samples can be found on our [developer website](https://developers.meta.com/horizon/documentation/unity/unity-mr-utility-kit-samples).
 
@@ -42,7 +41,7 @@ git clone https://github.com/oculus-samples/Unity-MRUtilityKitSample.git
 
 ## How to run the project in Unity
 
-1. Make sure you're using  *Unity 6000.0.59f2* or newer.
+1. Make sure you're using  *Unity 6000.0.66f2* or newer.
 2. In the Project window, navigate to [Assets/MRUKSamples/](Assets/MRUKSamples).
 3. Click on individual scenes.
 4. Click **Play** button to explore scene functionality in Unity.

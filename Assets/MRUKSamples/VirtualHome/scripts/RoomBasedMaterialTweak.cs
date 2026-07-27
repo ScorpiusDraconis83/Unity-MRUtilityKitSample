@@ -77,7 +77,11 @@ namespace Meta.XR.MRUtilityKitSamples.VirtualHome
             var roomBounds = currentRoom.GetRoomBounds();
             var roomSize = Mathf.Max(roomBounds.size.x, roomBounds.size.z);
             var roomSizeVec = new Vector2(0, roomSize);
+#if UNITY_6000_4_OR_NEWER
+            var allMeshes = FindObjectsByType<MeshRenderer>(FindObjectsInactive.Exclude);
+#else
             var allMeshes = FindObjectsByType<MeshRenderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+#endif
             float t = 0;
             while (t < 1)
             {

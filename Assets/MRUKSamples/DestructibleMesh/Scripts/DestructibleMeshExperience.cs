@@ -1,11 +1,12 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
-using System.Collections.Generic;
-using UnityEngine;
 using Meta.XR.MRUtilityKit;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
-using Unity.Collections;
+using System.Collections.Generic;
 using TMPro;
+using Unity.Collections;
+using UnityEngine;
 
 namespace Meta.XR.MRUtilityKitSamples.DestructibleMesh
 {
@@ -44,26 +45,30 @@ namespace Meta.XR.MRUtilityKitSamples.DestructibleMesh
         private void Update()
         {
             if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger) ||
-                OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))
+                OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger) ||
+                HandInputManager.Instance.ThumbTapDown)
             {
                 TryDestroyMeshSegment();
             }
 
             if (OVRInput.GetDown(OVRInput.Button.One) ||
-                OVRInput.GetDown(OVRInput.Button.Three))
+                OVRInput.GetDown(OVRInput.Button.Three) ||
+                HandInputManager.Instance.SwipeForwardDown)
             {
                 GlobalMeshSanityCheck();
                 destructibleGlobalMeshSpawner.AddDestructibleGlobalMesh(MRUK.Instance.GetCurrentRoom());
             }
 
             if (OVRInput.GetDown(OVRInput.Button.Two) ||
-                OVRInput.GetDown(OVRInput.Button.Four))
+                OVRInput.GetDown(OVRInput.Button.Four) ||
+                HandInputManager.Instance.SwipeBackwardDown)
             {
                 destructibleGlobalMeshSpawner.RemoveDestructibleGlobalMesh(MRUK.Instance.GetCurrentRoom());
             }
 
             if ((OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger) ||
-                 OVRInput.GetDown(OVRInput.Button.SecondaryHandTrigger)) &&
+                 OVRInput.GetDown(OVRInput.Button.SecondaryHandTrigger) ||
+                 HandInputManager.Instance.SwipeRightDown) &&
                 _destructibleMeshComponent)
             {
                 _destructibleMeshComponent.DebugDestructibleMeshComponent();

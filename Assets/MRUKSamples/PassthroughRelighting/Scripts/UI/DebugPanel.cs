@@ -57,7 +57,11 @@ namespace Meta.XR.MRUtilityKitSamples.PassthroughRelighting
             _passthroughBrightnessSlider.onValueChanged.AddListener(
                 (brightness) => { _passthroughLayer.SetBrightnessContrastSaturation(brightness); }
             );
+#if UNITY_6000_4_OR_NEWER
+            _effectMeshes = FindObjectsByType<EffectMesh>(FindObjectsInactive.Include);
+#else
             _effectMeshes = FindObjectsByType<EffectMesh>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#endif
         }
 
         private void Start()

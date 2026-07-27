@@ -1,6 +1,7 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 using Meta.XR.MRUtilityKit;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using UnityEngine;
 using UnityEngine.AI;
@@ -27,8 +28,9 @@ namespace MRUtilityKitSample.NavMesh
 
         private void Update()
         {
-            if (OVRInput.GetDown(OVRInput.RawButton.LIndexTrigger) ||
-                OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
+            if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger) ||
+                OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger) ||
+                HandInputManager.Instance.ThumbTapDown)
             {
                 if (!SceneNavigation)
                 {

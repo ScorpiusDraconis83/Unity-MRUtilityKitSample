@@ -2,6 +2,7 @@
 
 using Meta.XR.Samples;
 using UnityEngine;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 
 namespace Meta.XR.MRUtilityKitSamples.BouncingBall
 {
@@ -31,13 +32,13 @@ namespace Meta.XR.MRUtilityKitSamples.BouncingBall
                 {
                     var localVel = OVRInput.GetLocalControllerVelocity(OVRInput.Controller.RTouch);
                     var vel = trackingSpace.TransformVector(localVel);
-                    var angVel = OVRInput.GetLocalControllerAngularVelocity(OVRInput.Controller.RTouch);
+                    var angVel = OVRInput.GetLocalControllerAngularVelocityCw(OVRInput.Controller.RTouch);
                     currentBall.Release(rightControllerPivot.position, vel, angVel);
                     ballGrabbed = false;
                 }
             }
 
-            if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
+            if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger) || HandInputManager.Instance.ThumbTapDown)
             {
                 const float speed = 10f;
                 var newBall = Instantiate(ballPrefab).GetComponent<BouncingBallLogic>();

@@ -1,8 +1,11 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
+using System.Collections;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace MRUtilityKitSample.FindFloorZone
@@ -28,6 +31,16 @@ namespace MRUtilityKitSample.FindFloorZone
         [SerializeField] private LineRenderer _lineRenderer;
         [SerializeField] private float _maxStringLength = 10f;
         [SerializeField] private float _buttonReelSpeed = 0.4f;
+        [SerializeField] private float _microGestureReelSpeed = 1.0f;
+
+        [Header("Hand Tracking")]
+        [Tooltip("Reference to the right hand OVRSkeleton for getting finger bone positions.")]
+        [SerializeField] private OVRSkeleton _rightHandSkeleton;
+        [Tooltip("Rotation offset applied to the Handle's ParentConstraint when using hands.")]
+        [SerializeField] private Vector3 _handModeRotationOffset = new Vector3(0f, -35f, -90f);
+
+        [Tooltip("Reference to the Handle's ParentConstraint (auto-found if not assigned).")]
+        [SerializeField] private ParentConstraint _handleParentConstraint;
 
         [SerializeField] private float _tension = 0.1f;
         public Fish _fishHooked;
@@ -57,6 +70,18 @@ namespace MRUtilityKitSample.FindFloorZone
         private float _previousAngle;
         private bool _wasInDeadzone = true;
 
+        private float _previousPinchAngle;
+        private bool _wasPinchInDeadzone = true;
+
+        private Quaternion _controllerModeLocalRotation;
+        private bool _isHandMode;
+        private Vector3 _controllerModeConstraintRotationOffset;
+
+        private Camera _mainCamera;
+        private OVRCameraRig _cameraRig;
+        private OVRPlugin.HandState _handState;
+        private Coroutine _moveHandleCoroutine;
+
         [Header("Audio")] private AudioSource _audioSource;
 
         private float Stamina
@@ -71,6 +96,8 @@ namespace MRUtilityKitSample.FindFloorZone
                 }
             }
         }
+
+
 
         private void Start()
         {
@@ -90,6 +117,74 @@ namespace MRUtilityKitSample.FindFloorZone
             _activeFloater = _floater;
             _isFloaterInWater = false;
             _pullingOutTimer = _pullingOutTimerStart;
+
+            _mainCamera = Camera.main;
+            _controllerModeLocalRotation = transform.localRotation;
+
+            // Find the Handle's ParentConstraint if not assigned
+            if (_handleParentConstraint == null)
+            {
+                _handleParentConstraint = GetComponentInChildren<ParentConstraint>();
+            }
+
+            // Store the original constraint rotation offset for controller mode
+            if (_handleParentConstraint != null && _handleParentConstraint.sourceCount > 0)
+            {
+                _controllerModeConstraintRotationOffset = _handleParentConstraint.GetRotationOffset(0);
+            }
+
+            HandInputManager.Instance.OnInputModeChanged.AddListener(OnInputModeChanged);
+            OnInputModeChanged(HandInputManager.Instance.CurrentInputMode);
+        }
+
+        private void OnDestroy()
+        {
+            if (HandInputManager.Instance != null)
+            {
+                HandInputManager.Instance.OnInputModeChanged.RemoveListener(OnInputModeChanged);
+            }
+        }
+
+        private void OnInputModeChanged(InputMode mode)
+        {
+            _isHandMode = mode == InputMode.Hands;
+            if (_isHandMode)
+            {
+                _handleParentConstraint.enabled = false;
+                RepositionRodHandleInHandsMode();
+            }
+            else
+            {
+                _handleParentConstraint.enabled = true;
+            }
+        }
+        private void RepositionRodHandleInHandsMode()
+        {
+            if (!_isHandMode)
+            {
+                return;
+            }
+            else
+            {
+                var camTransform = _mainCamera.transform;
+                Vector3 targetRestPos = camTransform.position +
+                                        Vector3.ProjectOnPlane(camTransform.forward, Vector3.up).normalized * .2f +
+                                        camTransform.up * -.1f +
+                                        camTransform.right * -.2f;
+                if (_moveHandleCoroutine != null)
+                {
+                    StopCoroutine(_moveHandleCoroutine);
+                }
+                var flatForward = Vector3.ProjectOnPlane(camTransform.forward, Vector3.up).normalized;
+                _moveHandleCoroutine = StartCoroutine(MoveHandleToPosition(targetRestPos, Quaternion.LookRotation(flatForward, Vector3.up), 0.5f));
+            }
+        }
+        private void CheckForBringHandleInReach()
+        {
+            if (_isHandMode && Vector3.SqrMagnitude(_handleParentConstraint.transform.position - _mainCamera.transform.position) > 0.8f)
+            {
+                RepositionRodHandleInHandsMode();
+            }
         }
         private void LateUpdate()
         {
@@ -98,6 +193,7 @@ namespace MRUtilityKitSample.FindFloorZone
         }
         private void Update()
         {
+            CheckForBringHandleInReach();
             ControllerRodAdjustment();
             PullingOutTimerHandler();
             _configurableJoint.anchor = Vector3.up * _stringGiven;
@@ -157,14 +253,27 @@ namespace MRUtilityKitSample.FindFloorZone
             }
 
             // Debug controls
-            if (Input.GetKey(KeyCode.UpArrow) || OVRInput.Get(OVRInput.RawButton.Y))
+            if (Keyboard.current?.upArrowKey.isPressed == true || OVRInput.Get(OVRInput.Button.Four))
             {
                 StringAdjustment(_buttonReelSpeed);
             }
 
-            if (Input.GetKey(KeyCode.DownArrow) || OVRInput.Get(OVRInput.RawButton.X))
+            if (Keyboard.current?.downArrowKey.isPressed == true || OVRInput.Get(OVRInput.Button.Three))
             {
                 StringAdjustment(-_buttonReelSpeed);
+            }
+
+            // Microgesture controls - continuous wheeling while gesture is active
+            // Swipe up (backward gesture) = wheel in (reel in line / lower the line)
+            if (HandInputManager.Instance.IsSwipeBackwardActive)
+            {
+                StringAdjustment(-_microGestureReelSpeed);
+            }
+
+            // Swipe down (forward gesture) = wheel out (let out line / raise the line)
+            if (HandInputManager.Instance.IsSwipeForwardActive)
+            {
+                StringAdjustment(_microGestureReelSpeed);
             }
         }
 
@@ -380,40 +489,153 @@ namespace MRUtilityKitSample.FindFloorZone
                 _stringGiven = 0.1f;
             }
 
-            var thumbstick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, controller);
-
-            if (thumbstick.magnitude > DEADZONE)
+            if (!_isHandMode)
             {
-                var currentAngle = Mathf.Atan2(thumbstick.y, thumbstick.x) * Mathf.Rad2Deg;
+                var thumbstick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, controller);
 
-                // If not the first frame after exiting deadzone, calculate delta
-                if (!_wasInDeadzone)
+                if (thumbstick.magnitude > DEADZONE)
                 {
-                    var deltaAngle = currentAngle - _previousAngle;
+                    var currentAngle = Mathf.Atan2(thumbstick.y, thumbstick.x) * Mathf.Rad2Deg;
 
-                    // Normalize the delta to handle wraparound (e.g., 350° to 10°)
-                    if (deltaAngle > 180f)
+                    // If not the first frame after exiting deadzone, calculate delta
+                    if (!_wasInDeadzone)
                     {
-                        deltaAngle -= 360f;
+                        var deltaAngle = currentAngle - _previousAngle;
+
+                        // Normalize the delta to handle wraparound (e.g., 350° to 10°)
+                        if (deltaAngle > 180f)
+                        {
+                            deltaAngle -= 360f;
+                        }
+
+                        if (deltaAngle < -180f)
+                        {
+                            deltaAngle += 360f;
+                        }
+
+                        _stringGiven += deltaAngle * Time.deltaTime * -.1f;
+                        _stringGiven = Mathf.Clamp(_stringGiven, 0.1f, _maxStringLength);
+                        _stringRoll.transform.localRotation = Quaternion.Euler(Vector3.right * -currentAngle);
                     }
 
-                    if (deltaAngle < -180f)
-                    {
-                        deltaAngle += 360f;
-                    }
-
-                    _stringGiven += deltaAngle * Time.deltaTime * -.1f;
-                    _stringGiven = Mathf.Clamp(_stringGiven, 0.1f, _maxStringLength);
-                    _stringRoll.transform.localRotation = Quaternion.Euler(Vector3.right * -currentAngle);
+                    _previousAngle = currentAngle;
+                    _wasInDeadzone = false;
                 }
-
-                _previousAngle = currentAngle;
-                _wasInDeadzone = false;
+                else
+                {
+                    _wasInDeadzone = true;
+                }
             }
             else
             {
-                _wasInDeadzone = true;
+                if (TryGetRightHandPinchPosition(out var pinchPosition))
+                {
+                    if (Vector3.Distance(pinchPosition, _stringRoll.position) > 0.1f)
+                    {
+                        return;
+                    }
+                    //MakeASphereAndMoveit(pinchPosition);
+                    // Get direction from string roller to pinch position in world space
+                    var directionToPinch = pinchPosition - _stringRoll.position;
+
+                    // Transform direction to the string roller's parent local space
+                    var localDir = _stringRoll.parent.InverseTransformDirection(directionToPinch);
+
+                    // The string roller rotates around its local X axis
+                    // We want Z to point towards the pinch, so we calculate the angle in the Y-Z plane
+                    var currentAngle = Mathf.Atan2(localDir.y, localDir.z) * Mathf.Rad2Deg;
+
+                    if (!_wasPinchInDeadzone)
+                    {
+                        var deltaAngle = currentAngle - _previousPinchAngle;
+
+                        // Normalize the delta to handle wraparound (e.g., 350° to 10°)
+                        if (deltaAngle > 180f)
+                        {
+                            deltaAngle -= 360f;
+                        }
+
+                        if (deltaAngle < -180f)
+                        {
+                            deltaAngle += 360f;
+                        }
+
+                        // Convert angular change to string adjustment
+                        _stringGiven += deltaAngle * -0.001f;
+                        _stringGiven = Mathf.Clamp(_stringGiven, 0.1f, _maxStringLength);
+                    }
+
+                    // Rotate the string roller so its Z axis points towards the pinch (constrained to X rotation)
+                    _stringRoll.localRotation = Quaternion.Euler(-currentAngle, 0, 0);
+
+                    _previousPinchAngle = currentAngle;
+                    _wasPinchInDeadzone = false;
+                }
+                else
+                {
+                    _wasPinchInDeadzone = true;
+                }
             }
+        }
+
+
+        private IEnumerator MoveHandleToPosition(Vector3 targetPosition, Quaternion targetRotation, float duration)
+        {
+            var handleTransform = _handleParentConstraint.transform;
+            var startPosition = handleTransform.position;
+            var startRotation = handleTransform.rotation;
+            var elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                handleTransform.position = Vector3.Lerp(startPosition, targetPosition, t);
+                handleTransform.rotation = Quaternion.Slerp(startRotation, targetRotation, t);
+                yield return null;
+            }
+
+            handleTransform.position = targetPosition;
+            handleTransform.rotation = targetRotation;
+            _moveHandleCoroutine = null;
+        }
+
+        public bool TryGetRightHandPinchPosition(out Vector3 pinchPosition)
+        {
+            pinchPosition = Vector3.zero;
+
+            if (!HandInputManager.Instance.IsIndexPinching)
+            {
+                return false;
+            }
+
+            if (_cameraRig == null)
+            {
+                _cameraRig = FindAnyObjectByType<OVRCameraRig>();
+                if (_cameraRig == null)
+                {
+                    return false;
+                }
+            }
+
+            if (!OVRPlugin.GetHandState(OVRPlugin.Step.Render, OVRPlugin.Hand.HandRight, ref _handState))
+            {
+                return false;
+            }
+
+            const int indexTipIndex = (int)OVRPlugin.BoneId.XRHand_IndexTip;
+
+            if (_handState.BonePositions == null || _handState.BonePositions.Length <= indexTipIndex)
+            {
+                return false;
+            }
+
+            var tipPos = _handState.BonePositions[indexTipIndex];
+            // BonePositions are in tracking space with OVR conventions (right-handed, flip Z for Unity)
+            var trackingSpacePos = new Vector3(tipPos.x, tipPos.y, -tipPos.z);
+            // Transform from tracking space to world space via the camera rig
+            pinchPosition = _cameraRig.trackingSpace.TransformPoint(trackingSpacePos);
+            return true;
         }
     }
 }

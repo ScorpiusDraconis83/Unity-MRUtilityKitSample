@@ -12,13 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b414b497f4292d4ab7fc53a67464cb7, type: 3}
   m_Name: DevAgentSettings
   m_EditorClassIdentifier: 
-  enabled: 1
-  serverAddress: 169.254.244.245
+  enabled: 0
+  serverAddress: 127.0.0.1
   serverPort: 48735
   mcpServerPort: 48736
   witConfiguration: {fileID: 0}
   pushToTalkButton: 1
-  handPushToTalkGesture: 0
   enableDelayedRelease: 1
   releaseDelay: 0.8
-  accessToken: 11719ccfbc4d43afaa62d9c2c10345a8
+  accessToken: 0a17316ed161465b81668b30eb91094d
