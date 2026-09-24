@@ -4,6 +4,7 @@
 using Meta.XR.MRUtilityKitSamples;
 using Meta.XR.Samples;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using Meta.XR.MRUtilityKitSamples.HandInput;
 
@@ -58,9 +59,17 @@ namespace Meta.XR.MRUtilityKitSamples.StartScene
 
         private void Update()
         {
-            if (OVRInput.GetUp(OVRInput.Button.Start) && SceneManager.GetActiveScene().name != _startSceneName)
+            if ((Keyboard.current?.escapeKey.wasPressedThisFrame == true || OVRInput.GetUp(OVRInput.Button.Start)) && SceneManager.GetActiveScene().name != _startSceneName)
             {
                 SceneManager.LoadScene(0);
+            }
+
+            // Debug: press the right arrow key to advance to the next scene in the build settings.
+            if (Keyboard.current?.rightArrowKey.wasPressedThisFrame == true)
+            {
+                var sceneCount = SceneManager.sceneCountInBuildSettings;
+                var nextSceneIndex = (SceneManager.GetActiveScene().buildIndex + 1) % sceneCount;
+                SceneManager.LoadScene(nextSceneIndex);
             }
 
             Tooltip.SetActive(_showStartButtonTooltip);

@@ -2,6 +2,7 @@
 
 using System.Collections;
 using Meta.XR.MRUtilityKit;
+using Meta.XR.MRUtilityKitSamples.HandInput;
 using Meta.XR.Samples;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -118,23 +119,85 @@ namespace Meta.XR.MRUtilityKitSamples.PassthroughRelighting
         void LateUpdate()
         {
             AlignFeetToSlope();
+            // Track previous pinch state for edge detection (hand-tracking jump)
+            var handInput = HandInputManager.Instance;
+            _wasIndexPinching = handInput != null && handInput.IsIndexPinching;
+        }
+
+        // Right hand index finger pinch is the A button (jump) alternative in hand-tracking mode.
+        private bool _wasIndexPinching;
+        bool HandJumpDown
+        {
+            get
+            {
+                var handInput = HandInputManager.Instance;
+                return handInput != null && handInput.CurrentInputMode == InputMode.Hands
+                    && handInput.IsIndexPinching && !_wasIndexPinching;
+            }
+        }
+        bool HandJumpHeld
+        {
+            get
+            {
+                var handInput = HandInputManager.Instance;
+                return handInput != null && handInput.CurrentInputMode == InputMode.Hands
+                    && handInput.IsIndexPinching;
+            }
         }
         void ReceiveInputs()
         {
             Vector2 moveInput = _moveAction.ReadValue<Vector2>();
             Vector3 horizontalAndVertical;
             Vector2 ovrStick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick);
-            if (ovrStick == Vector2.zero)
+            Vector2 handStick = GetHandMoveInput();
+            if (ovrStick != Vector2.zero)
             {
-                horizontalAndVertical = new Vector3(moveInput.x, 0, moveInput.y);
+                horizontalAndVertical = new Vector3(ovrStick.x, 0, ovrStick.y);
+            }
+            else if (handStick != Vector2.zero)
+            {
+                horizontalAndVertical = new Vector3(handStick.x, 0, handStick.y);
             }
             else
             {
-                horizontalAndVertical = new Vector3(ovrStick.x, 0, ovrStick.y);
+                horizontalAndVertical = new Vector3(moveInput.x, 0, moveInput.y);
             }
             Vector3 viewerProjectedForward = Vector3.ProjectOnPlane(_cam.transform.forward, Vector3.up);
             Vector3 viewerProjectedRight = Vector3.ProjectOnPlane(_cam.transform.right, Vector3.up);
             _viewAlignedMovingDirection = (viewerProjectedForward * horizontalAndVertical.z * _speed) + (viewerProjectedRight * horizontalAndVertical.x * _speed);
+        }
+
+        /// <summary>
+        /// Builds a thumbstick-like movement vector from hand microgestures when in hand-tracking mode.
+        /// Swipe forward/backward drive forward/backward motion; swipe left/right strafe.
+        /// Both axes use the continuous "Active" state so movement is sustained while the gesture is held.
+        /// </summary>
+        Vector2 GetHandMoveInput()
+        {
+            var handInput = HandInputManager.Instance;
+            if (handInput == null || handInput.CurrentInputMode != InputMode.Hands)
+            {
+                return Vector2.zero;
+            }
+
+            Vector2 move = Vector2.zero;
+            if (handInput.IsSwipeForwardActive)
+            {
+                move.y = 1f;
+            }
+            else if (handInput.IsSwipeBackwardActive)
+            {
+                move.y = -1f;
+            }
+            if (handInput.IsSwipeRightActive)
+            {
+                move.x = 1f;
+            }
+            else if (handInput.IsSwipeLeftActive)
+            {
+                move.x = -1f;
+            }
+            return move;
         }
         void Gravity()
         {
@@ -272,7 +335,7 @@ namespace Meta.XR.MRUtilityKitSamples.PassthroughRelighting
 
             if (canJump)
             {
-                if ((_jumpAction.WasPressedThisFrame() || OVRInput.GetDown(_jumpButton)) && !IsInvoking("Jump"))
+                if ((_jumpAction.WasPressedThisFrame() || OVRInput.GetDown(_jumpButton) || HandJumpDown) && !IsInvoking("Jump"))
                 {
                     _finaljumpMultiplier = 1;
                     _timeSinceGrounded = _coyoteTime + 1f; // Prevent double jumps
@@ -281,7 +344,7 @@ namespace Meta.XR.MRUtilityKitSamples.PassthroughRelighting
                     Invoke("Jump", .2f);
                 }
                 // Only accumulate jump power while jump is charging (after pressing, before executing)
-                if (IsInvoking("Jump") && (_jumpAction.IsPressed() || OVRInput.Get(_jumpButton)))
+                if (IsInvoking("Jump") && (_jumpAction.IsPressed() || OVRInput.Get(_jumpButton) || HandJumpHeld))
                 {
                     _finaljumpMultiplier += _jumpMultiplier * Time.deltaTime;
                 }

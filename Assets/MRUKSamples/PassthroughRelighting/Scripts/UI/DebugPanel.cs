@@ -62,6 +62,10 @@ namespace Meta.XR.MRUtilityKitSamples.PassthroughRelighting
 #else
             _effectMeshes = FindObjectsByType<EffectMesh>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 #endif
+
+            _lightIntensitySlider.value = _sceneMaterial.GetFloat(HighlightAttenuationShaderPropertyName);
+            _lightBlendFactor.value = _sceneMaterial.GetFloat(HighlightOpaquenessShaderPropertyName);
+            _passthroughBrightnessSlider.value = _passthroughLayer.colorMapEditorBrightness;
         }
 
         private void Start()

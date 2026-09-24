@@ -83,7 +83,11 @@ crashlytics-build.properties
 # Rider cache directory
 .idea/
 # VS Code cache directory
-.vscode/
+.vscode/*
 
 # Unity Package Manager lock file
 packages-lock.json
+
+# Meta Quest agentic tooling: keep VS Code/Cursor workspace recommendations
+!.vscode/extensions.json
+!.vscode/mcp.json

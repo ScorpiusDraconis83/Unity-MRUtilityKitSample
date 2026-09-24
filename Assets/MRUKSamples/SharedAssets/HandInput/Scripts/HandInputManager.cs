@@ -176,6 +176,18 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
         public bool IsSwipeBackwardActive { get; private set; }
 
         /// <summary>
+        /// Returns true while a swipe left gesture is active (held for the swipe hold duration after detection).
+        /// Mirrors <see cref="IsSwipeForwardActive"/> so both movement axes can be driven continuously.
+        /// </summary>
+        public bool IsSwipeLeftActive { get; private set; }
+
+        /// <summary>
+        /// Returns true while a swipe right gesture is active (held for the swipe hold duration after detection).
+        /// Mirrors <see cref="IsSwipeForwardActive"/> so both movement axes can be driven continuously.
+        /// </summary>
+        public bool IsSwipeRightActive { get; private set; }
+
+        /// <summary>
         /// Whether the right hand is currently performing an index finger pinch (A button alternative).
         /// </summary>
         public bool IsIndexPinching { get; private set; }
@@ -239,6 +251,8 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
         // Continuous swipe hold timers
         private float _swipeForwardEndTime;
         private float _swipeBackwardEndTime;
+        private float _swipeLeftEndTime;
+        private float _swipeRightEndTime;
 
         // Legacy properties for backward compatibility
         /// <summary>
@@ -446,8 +460,12 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
                 _lastLeftMicrogesture = OVRHand.MicrogestureType.NoGesture;
                 _swipeForwardEndTime = 0f;
                 _swipeBackwardEndTime = 0f;
+                _swipeLeftEndTime = 0f;
+                _swipeRightEndTime = 0f;
                 EndSwipeForwardIfActive();
                 EndSwipeBackwardIfActive();
+                EndSwipeLeftIfActive();
+                EndSwipeRightIfActive();
                 return;
             }
 
@@ -503,6 +521,14 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
             {
                 EndSwipeBackwardIfActive();
             }
+            if (Time.time >= _swipeLeftEndTime)
+            {
+                EndSwipeLeftIfActive();
+            }
+            if (Time.time >= _swipeRightEndTime)
+            {
+                EndSwipeRightIfActive();
+            }
         }
 
         /// <summary>
@@ -517,9 +543,13 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
                 case OVRHand.MicrogestureType.SwipeForward:
                     // Extend or start the swipe forward timer
                     _swipeForwardEndTime = Time.time + _swipeHoldDuration;
-                    // End opposite direction
+                    // End every other direction
                     _swipeBackwardEndTime = 0f;
+                    _swipeLeftEndTime = 0f;
+                    _swipeRightEndTime = 0f;
                     EndSwipeBackwardIfActive();
+                    EndSwipeLeftIfActive();
+                    EndSwipeRightIfActive();
                     if (!IsSwipeForwardActive)
                     {
                         IsSwipeForwardActive = true;
@@ -529,23 +559,53 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
                 case OVRHand.MicrogestureType.SwipeBackward:
                     // Extend or start the swipe backward timer
                     _swipeBackwardEndTime = Time.time + _swipeHoldDuration;
-                    // End opposite direction
+                    // End every other direction
                     _swipeForwardEndTime = 0f;
+                    _swipeLeftEndTime = 0f;
+                    _swipeRightEndTime = 0f;
                     EndSwipeForwardIfActive();
+                    EndSwipeLeftIfActive();
+                    EndSwipeRightIfActive();
                     if (!IsSwipeBackwardActive)
                     {
                         IsSwipeBackwardActive = true;
                         OnSwipeBackwardStarted?.Invoke();
                     }
                     break;
-                case OVRHand.MicrogestureType.ThumbTap:
                 case OVRHand.MicrogestureType.SwipeLeft:
-                case OVRHand.MicrogestureType.SwipeRight:
-                    // End any active swipe when a different gesture is detected
+                    // Extend or start the swipe left timer
+                    _swipeLeftEndTime = Time.time + _swipeHoldDuration;
+                    // End every other direction
+                    _swipeRightEndTime = 0f;
                     _swipeForwardEndTime = 0f;
                     _swipeBackwardEndTime = 0f;
+                    EndSwipeRightIfActive();
                     EndSwipeForwardIfActive();
                     EndSwipeBackwardIfActive();
+                    IsSwipeLeftActive = true;
+                    break;
+                case OVRHand.MicrogestureType.SwipeRight:
+                    // Extend or start the swipe right timer
+                    _swipeRightEndTime = Time.time + _swipeHoldDuration;
+                    // End every other direction
+                    _swipeLeftEndTime = 0f;
+                    _swipeForwardEndTime = 0f;
+                    _swipeBackwardEndTime = 0f;
+                    EndSwipeLeftIfActive();
+                    EndSwipeForwardIfActive();
+                    EndSwipeBackwardIfActive();
+                    IsSwipeRightActive = true;
+                    break;
+                case OVRHand.MicrogestureType.ThumbTap:
+                    // End any active swipe when a non-directional gesture is detected
+                    _swipeForwardEndTime = 0f;
+                    _swipeBackwardEndTime = 0f;
+                    _swipeLeftEndTime = 0f;
+                    _swipeRightEndTime = 0f;
+                    EndSwipeForwardIfActive();
+                    EndSwipeBackwardIfActive();
+                    EndSwipeLeftIfActive();
+                    EndSwipeRightIfActive();
                     break;
             }
         }
@@ -572,6 +632,22 @@ namespace Meta.XR.MRUtilityKitSamples.HandInput
                 IsSwipeBackwardActive = false;
                 OnSwipeBackwardEnded?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// Ends the swipe left state if it's currently active.
+        /// </summary>
+        private void EndSwipeLeftIfActive()
+        {
+            IsSwipeLeftActive = false;
+        }
+
+        /// <summary>
+        /// Ends the swipe right state if it's currently active.
+        /// </summary>
+        private void EndSwipeRightIfActive()
+        {
+            IsSwipeRightActive = false;
         }
 
         /// <summary>

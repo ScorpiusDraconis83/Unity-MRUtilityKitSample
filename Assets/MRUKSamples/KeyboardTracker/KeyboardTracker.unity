@@ -1723,6 +1723,7 @@ GameObject:
   - component: {fileID: 1342249206}
   - component: {fileID: 1342249208}
   - component: {fileID: 1342249207}
+  - component: {fileID: 1342249209}
   m_Layer: 5
   m_Name: Instructions
   m_TagString: Untagged
@@ -1799,8 +1800,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1852,6 +1853,38 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1342249205}
   m_CullTransparentMesh: 1
+--- !u!114 &1342249209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342249205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5f6789012345678abcdef0123456789, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  instructionText: {fileID: 1342249207}
+  controllerModeText: 'Generic Keyboard Tracker
+
+
+    Press A to switch passthrough
+    modes'
+  handsModeText: 'Generic Keyboard Tracker
+
+
+    Thumb tap to switch passthrough
+    modes'
+  uiTransform: {fileID: 0}
+  cameraRig: {fileID: 0}
+  handsPositionMode: 1
+  gazeForwardOffset: 0.5
+  gazeHeightOffset: -0.1
+  wristPositionOffset: {x: 0, y: 0.1, z: 0}
+  wristRotationOffset: {x: 0, y: -90, z: 0}
+  wristUIScale: 0.002
+  positionSmoothSpeed: 5
 --- !u!1 &1373768423
 GameObject:
   m_ObjectHideFlags: 0
@@ -2000,9 +2033,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 555725d48e9051a4bb6b8d45178c2fdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectionSurfaceType: 0
-  overlayType: 1
-  compositionDepth: 0
   hidden: 0
   overridePerLayerColorScaleAndOffset: 0
   colorScale: {x: 1, y: 1, z: 1, w: 1}
@@ -2052,7 +2082,6 @@ MonoBehaviour:
   _colorLutTargetTexture: {fileID: 0}
   _lutWeight: 1
   _flipLutY: 1
-  serializedSurfaceGeometry: []
   textureOpacity_: 1
   edgeRenderingEnabled_: 0
   edgeColor_: {r: 1, g: 1, b: 1, a: 1}

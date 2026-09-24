@@ -16,7 +16,15 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
     {
         private const string WORLD_LOCK_STATUS_ON = "<color=#00FAFF><b>ON</b></color>";
         private const string WORLD_LOCK_STATUS_OFF = "<color=\"orange\"><b>OFF</b></color>";
-        private const string WORLD_LOCK_ENABLE_ACTION = "(Use <b>X</b> to toggle this feature)";
+        private const string WORLD_LOCK_ENABLE_ACTION_CONTROLLER = "(Use <b>X</b> to toggle this feature)";
+        private const string WORLD_LOCK_ENABLE_ACTION_HANDS = "(Use <b>left hand index finger pinch</b> to toggle this feature)";
+
+        // The toggle action differs between controllers (X button) and hands (left hand index finger pinch),
+        // so the hint text must follow the active input mode.
+        private string WorldLockEnableAction =>
+            HandInputManager.Instance != null && HandInputManager.Instance.CurrentInputMode == InputMode.Hands
+                ? WORLD_LOCK_ENABLE_ACTION_HANDS
+                : WORLD_LOCK_ENABLE_ACTION_CONTROLLER;
 
         [SerializeField] private EnvironmentRaycastManager _raycastManager;
         [SerializeField] private Transform _centerEyeAnchor;
@@ -144,20 +152,38 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
             }
             AnimatePanelPose();
 
-            if (OVRInput.GetUp(OVRInput.Button.Three))
+            if (ShouldToggleWorldLock())
             {
                 MRUK.Instance.EnableWorldLock = !MRUK.Instance.EnableWorldLock;
             }
             if (_worldLockStatus)
             {
                 string wlStatus = MRUK.Instance.IsWorldLockActive ? WORLD_LOCK_STATUS_ON : WORLD_LOCK_STATUS_OFF;
-                _worldLockStatus.text = $"World Lock Active: {wlStatus}\n {WORLD_LOCK_ENABLE_ACTION}";
+                _worldLockStatus.text = $"World Lock Active: {wlStatus}\n {WorldLockEnableAction}";
             }
         }
 
         private Ray GetRaycastRay()
         {
             return new Ray(_raycastAnchor.position + _raycastAnchor.forward * 0.1f, _raycastAnchor.forward);
+        }
+
+        /// <summary>
+        /// Returns true on the frame the world-lock toggle action is released. In controller mode this is the
+        /// X button; in hands mode it is the left hand index finger pinch (the X button alternative).
+        /// </summary>
+        private bool ShouldToggleWorldLock()
+        {
+            if (HandInputManager.Instance != null && HandInputManager.Instance.CurrentInputMode == InputMode.Hands)
+            {
+                bool secondaryPinching = HandInputManager.Instance.IsSecondaryIndexPinching;
+                bool released = _wasSecondaryIndexPinching && !secondaryPinching;
+                _wasSecondaryIndexPinching = secondaryPinching;
+                return released;
+            }
+
+            _wasSecondaryIndexPinching = false;
+            return OVRInput.GetUp(OVRInput.Button.Three);
         }
 
         /// <summary>
@@ -245,6 +271,7 @@ namespace Meta.XR.MRUtilityKitSamples.EnvironmentPanelPlacement
         }
 
         private bool _wasHandPinching;
+        private bool _wasSecondaryIndexPinching;
 
         private void LateUpdate()
         {

@@ -52,7 +52,6 @@ namespace Meta.XR.MRUtilityKitSamples.DestructibleMesh
             }
 
             if (OVRInput.GetDown(OVRInput.Button.One) ||
-                OVRInput.GetDown(OVRInput.Button.Three) ||
                 HandInputManager.Instance.SwipeForwardDown)
             {
                 GlobalMeshSanityCheck();
@@ -60,7 +59,6 @@ namespace Meta.XR.MRUtilityKitSamples.DestructibleMesh
             }
 
             if (OVRInput.GetDown(OVRInput.Button.Two) ||
-                OVRInput.GetDown(OVRInput.Button.Four) ||
                 HandInputManager.Instance.SwipeBackwardDown)
             {
                 destructibleGlobalMeshSpawner.RemoveDestructibleGlobalMesh(MRUK.Instance.GetCurrentRoom());
